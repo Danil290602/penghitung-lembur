@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Payroll Lembur & Gaji</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-100 font-sans text-slate-800">
+
+    <div class="max-w-6xl mx-auto my-8 p-6 bg-white shadow-2xl rounded-xl">
+        <div class="border-b pb-4 mb-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-blue-800"><i class="fas fa-file-invoice-dollar mr-2"></i>Sistem Kalkulasi Lembur & Gaji</h1>
+                <p class="text-sm text-gray-500">Akumulasi Otomatis Sesuai PP No. 35 Tahun 2021</p>
+            </div>
+            <div class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full border border-green-400">Versi 2.0 by: Danil project</div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-1 space-y-5 border-r pr-0 lg:pr-6 border-gray-200">
+                <h2 class="text-lg font-bold text-gray-700 border-l-4 border-blue-500 pl-3">1. Input Harian</h2>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Gaji Pokok Bulanan</label>
+                    <div class="relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 font-bold">Rp</span>
+                        </div>
+                        <input type="number" id="gajiPokok" onchange="updateGrandTotal()" class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 py-2 border-gray-300 border rounded-md" placeholder="5000000">
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">*Ubah ini akan update total akhir</p>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase">Tanggal & Catatan</label>
+                        <input type="date" id="tanggalLembur" class="mt-1 block w-full py-1 px-2 border border-gray-300 rounded text-sm mb-2">
+                        <input type="text" id="catatanLembur" class="block w-full py-1 px-2 border border-gray-300 rounded text-sm" placeholder="Contoh: Fixing Bug / Stock Opname">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase">Jenis Hari</label>
+                        <select id="jenisLembur" class="mt-1 block w-full py-2 px-2 border border-gray-300 bg-white rounded text-sm">
+                            <option value="kerja">Hari Kerja Biasa (Workday)</option>
+                            <option value="libur">Hari Libur / Nasional (Holiday)</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs text-gray-500">Mulai</label>
+                            <input type="time" id="jamMulai" class="w-full border rounded p-1 text-sm">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500">Selesai</label>
+                            <input type="time" id="jamSelesai" class="w-full border rounded p-1 text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="hitungDanSimpan()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded shadow transition">
+                        <i class="fas fa-plus-circle mr-1"></i> Hitung & Simpan
+                    </button>
+                    <button onclick="resetForm()" class="px-3 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded transition">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                </div>
+                
+                <div id="notif" class="hidden text-sm text-green-600 bg-green-50 p-2 rounded border border-green-200 text-center animate-pulse">
+                    Data berhasil ditambahkan!
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 flex flex-col h-full">
+                
+                <div class="flex-grow">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-gray-700 border-l-4 border-orange-500 pl-3">2. Riwayat Lembur Bulan Ini</h2>
+                        <button onclick="hapusSemuaData()" class="text-xs text-red-500 hover:text-red-700 underline">Hapus Semua Data</button>
+                    </div>
+
+                    <div class="overflow-x-auto bg-white border rounded-lg shadow-sm h-64 overflow-y-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Catatan</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durasi</th>
+                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Nominal</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelRiwayat" class="bg-white divide-y divide-gray-200 text-sm">
+                                <tr>
+                                    <td colspan="5" class="px-4 py-4 text-center text-gray-400 italic">Belum ada data lembur yang masuk.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-6 bg-slate-800 text-white p-6 rounded-xl shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-10 -top-10 w-40 h-40 bg-white opacity-5 rounded-full"></div>
+                    
+                    <h2 class="text-lg font-semibold text-gray-300 mb-4 border-b border-gray-600 pb-2">3. Estimasi Total Penerimaan (Take Home Pay)</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
+                        <div>
+                            <p class="text-xs text-gray-400 uppercase tracking-wider">Gaji Pokok</p>
+                            <p class="text-xl font-medium" id="displayGajiPokok">Rp 0</p>
+                        </div>
+                        <div class="relative">
+                            <div class="absolute left-0 top-2 bottom-2 w-px bg-gray-600 hidden md:block"></div>
+                            <div class="md:pl-6">
+                                <p class="text-xs text-orange-400 uppercase tracking-wider font-bold">Total Lembur (+)</p>
+                                <p class="text-xl font-medium text-orange-300" id="displayTotalLembur">Rp 0</p>
+                            </div>
+                        </div>
+                        <div class="relative bg-white/10 rounded-lg p-2 md:p-0 md:bg-transparent">
+                             <div class="absolute left-0 top-2 bottom-2 w-px bg-gray-600 hidden md:block"></div>
+                            <div class="md:pl-6">
+                                <p class="text-xs text-green-400 uppercase tracking-wider font-bold">Total Diterima</p>
+                                <p class="text-3xl font-bold text-green-400" id="displayGrandTotal">Rp 0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA STATE ---
+        let riwayatLembur = JSON.parse(localStorage.getItem('riwayatLembur')) || [];
+
+        // Set Default Date ke hari ini
+        document.getElementById('tanggalLembur').valueAsDate = new Date();
+
+        // Load data saat pertama kali buka
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTable();
+            // Coba ambil gaji terakhir dari local storage jika ada
+            const savedGaji = localStorage.getItem('lastGaji');
+            if(savedGaji) document.getElementById('gajiPokok').value = savedGaji;
+            updateGrandTotal();
+        });
+
+        // --- CORE FUNCTIONS ---
+
+        const formatRupiah = (number) => {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(number);
+        }
+
+        function hitungDanSimpan() {
+            const gajiInput = document.getElementById('gajiPokok').value;
+            const gaji = parseFloat(gajiInput);
+            const tanggal = document.getElementById('tanggalLembur').value;
+            const catatan = document.getElementById('catatanLembur').value || "-";
+            const jenis = document.getElementById('jenisLembur').value;
+            const startStr = document.getElementById('jamMulai').value;
+            const endStr = document.getElementById('jamSelesai').value;
+
+            // Validasi
+            if (!gaji || !tanggal || !startStr || !endStr) {
+                alert("Mohon lengkapi Gaji Pokok, Tanggal, dan Jam Lembur.");
+                return;
+            }
+
+            // Simpan gaji ke local storage agar user tidak perlu ketik ulang
+            localStorage.setItem('lastGaji', gaji);
+
+            // Hitung Durasi
+            let startDate = new Date(`2000-01-01T${startStr}:00`);
+            let endDate = new Date(`2000-01-01T${endStr}:00`);
+            
+            // Handle cross-day (lembur lewat tengah malam)
+            if (endDate < startDate) {
+                endDate.setDate(endDate.getDate() + 1);
+            }
+
+            const diffMs = endDate - startDate;
+            const diffHours = diffMs / (1000 * 60 * 60);
+
+            if (diffHours <= 0) {
+                alert("Jam selesai harus lebih besar dari jam mulai.");
+                return;
+            }
+
+            // Hitung Nominal (Logic PP 35/2021)
+            const hourlyRate = gaji / 173;
+            let nominalLembur = 0;
+
+            if (jenis === 'kerja') {
+                // Hari Kerja: 1 jam pertama 1.5x, selanjutnya 2x
+                let jamPertama = (diffHours > 1) ? 1 : diffHours;
+                let jamSisa = (diffHours > 1) ? (diffHours - 1) : 0;
+                nominalLembur = (jamPertama * 1.5 * hourlyRate) + (jamSisa * 2 * hourlyRate);
+            } else {
+                // Hari Libur (Asumsi 5 hari kerja): 8 jam pertama 2x, jam ke-9 3x, jam ke-10+ 4x
+                let sisa = diffHours;
+                let jam2x = Math.min(sisa, 8);
+                sisa -= jam2x;
+                let jam3x = (sisa > 0) ? Math.min(sisa, 1) : 0;
+                sisa -= jam3x;
+                let jam4x = (sisa > 0) ? sisa : 0;
+                
+                nominalLembur = (jam2x * 2 * hourlyRate) + (jam3x * 3 * hourlyRate) + (jam4x * 4 * hourlyRate);
+            }
+
+            // Buat Object Data
+            const dataBaru = {
+                id: Date.now(),
+                tanggal: tanggal,
+                catatan: catatan,
+                durasi: diffHours.toFixed(2),
+                nominal: nominalLembur,
+                jenis: jenis
+            };
+
+            // Simpan ke Array & Local Storage
+            riwayatLembur.push(dataBaru);
+            saveToStorage();
+
+            // Update UI
+            renderTable();
+            showNotif();
+            
+            // Opsional: Reset form jam saja, gaji biarkan
+            // document.getElementById('jamMulai').value = '';
+            // document.getElementById('jamSelesai').value = '';
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tabelRiwayat');
+            tbody.innerHTML = '';
+
+            let totalLembur = 0;
+
+            if (riwayatLembur.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-gray-400 italic">Belum ada data lembur yang masuk.</td></tr>`;
+            } else {
+                // Sort by date descending (terbaru diatas)
+                riwayatLembur.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+                riwayatLembur.forEach(item => {
+                    totalLembur += item.nominal;
+                    
+                    const row = `
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-4 py-3 whitespace-nowrap text-gray-700">${item.tanggal}</td>
+                            <td class="px-4 py-3 text-gray-600 truncate max-w-xs">${item.catatan}</td>
+                            <td class="px-4 py-3 text-gray-600 text-center">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">${item.durasi} Jam</span>
+                            </td>
+                            <td class="px-4 py-3 text-right font-medium text-gray-800">${formatRupiah(item.nominal)}</td>
+                            <td class="px-4 py-3 text-center">
+                                <button onclick="hapusItem(${item.id})" class="text-red-500 hover:text-red-700">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            }
+
+            // Update Tampilan Total Lembur
+            document.getElementById('displayTotalLembur').innerText = formatRupiah(totalLembur);
+            document.getElementById('displayTotalLembur').dataset.value = totalLembur;
+            
+            updateGrandTotal();
+        }
+
+        function updateGrandTotal() {
+            const gaji = parseFloat(document.getElementById('gajiPokok').value) || 0;
+            const totalLembur = parseFloat(document.getElementById('displayTotalLembur').dataset.value) || 0;
+            const grandTotal = gaji + totalLembur;
+
+            document.getElementById('displayGajiPokok').innerText = formatRupiah(gaji);
+            document.getElementById('displayGrandTotal').innerText = formatRupiah(grandTotal);
+        }
+
+        function hapusItem(id) {
+            if(confirm('Hapus data lembur ini?')) {
+                riwayatLembur = riwayatLembur.filter(item => item.id !== id);
+                saveToStorage();
+                renderTable();
+            }
+        }
+
+        function hapusSemuaData() {
+            if(confirm('Yakin ingin menghapus SELURUH riwayat lembur?')) {
+                riwayatLembur = [];
+                saveToStorage();
+                renderTable();
+            }
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('riwayatLembur', JSON.stringify(riwayatLembur));
+        }
+
+        function resetForm() {
+            document.getElementById('catatanLembur').value = '';
+            document.getElementById('jamMulai').value = '';
+            document.getElementById('jamSelesai').value = '';
+        }
+
+        function showNotif() {
+            const notif = document.getElementById('notif');
+            notif.classList.remove('hidden');
+            setTimeout(() => {
+                notif.classList.add('hidden');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
